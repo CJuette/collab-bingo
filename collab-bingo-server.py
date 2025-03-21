@@ -90,10 +90,16 @@ def enter_player_into_room(room_name, player_name):
         row = cursor.fetchone()
         if row:
             options = row[0].split(",")
+            
+            # Calculate the next square number
+            num_options = len(options)
+            next_square = int(num_options**0.5 + 1)**2
+            while len(options) < next_square:
+                options.append("<empty>")
+            
             random.shuffle(options)
             board = json.dumps(options)
             cursor.execute("UPDATE players SET board = ? WHERE name = ? AND room = ?", (board, player_name, room_name))
-        
         conn.commit()
 
 @app.route("/join_room", methods=["POST"])

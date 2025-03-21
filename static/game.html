@@ -70,11 +70,15 @@
             options.forEach(option => {
                 const cell = document.createElement("div");
                 cell.className = "cell";
-                cell.innerText = option;
-                if (ticked.includes(option) || option === "FREE SPACE") {
+                if (option === "<empty>") {
                     cell.classList.add("ticked");
+                } else {
+                    cell.innerText = option;
+                    if (ticked.includes(option) || option === "FREE SPACE") {
+                        cell.classList.add("ticked");
+                    }
+                    cell.onclick = () => toggleOption(option, cell);
                 }
-                cell.onclick = () => toggleOption(option, cell);
                 boardElement.appendChild(cell);
             });
         }

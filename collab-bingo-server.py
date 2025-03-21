@@ -35,6 +35,7 @@ def init_db():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS players (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                board TEXT NOT NULL,
                 name TEXT NOT NULL,
                 room TEXT NOT NULL,
                 UNIQUE(name, room)
@@ -68,6 +69,22 @@ def create_room():
     except sqlite3.IntegrityError:
         return jsonify({"error": "Room already exists"}), 400
 
+def enter_player_into_room(room_name, player_name):
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT OR IGNORE INTO players (board, name, room) VALUES (?, ?, ?)", ('', player_name, room_name))
+        
+        # Retrieve room options and create a randomized board for the player
+        cursor.execute("SELECT options FROM rooms WHERE name = ?", (room_name,))
+        row = cursor.fetchone()
+        if row:
+            options = row[0].split(",")
+            random.shuffle(options)
+            board = json.dumps(options)
+            cursor.execute("UPDATE players SET board = ? WHERE name = ? AND room = ?", (board, player_name, room_name))
+        
+        conn.commit()
+
 @app.route("/join_room", methods=["POST"])
 def join_room_api():
     data = request.json
@@ -76,14 +93,19 @@ def join_room_api():
     if not room_name or not player_name:
         return jsonify({"error": "Room name and player name are required"}), 400
     
-    with sqlite3.connect(db_file) as conn:
-        cursor = conn.cursor()
-        cursor.execute("INSERT OR IGNORE INTO players (name, room) VALUES (?, ?)", (player_name, room_name))
-        conn.commit()
+    enter_player_into_room(room_name, player_name)
     return jsonify({"success": "Joined room"})
 
 @app.route("/game_state/<room>", methods=["GET"])
 def get_game_state(room):
+    player = request.args.get("player")
+
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM players WHERE name = ? AND room = ?", (player, room))
+        if cursor.fetchone() is None:
+            enter_player_into_room(room, player)
+
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT options FROM rooms WHERE name = ?", (room,))
@@ -92,9 +114,18 @@ def get_game_state(room):
             return jsonify({"error": "Room not found"}), 404
         
         all_options = row[0].split(",")
+        
+        # Retrieve the player's specific board
+        cursor.execute("SELECT board FROM players WHERE name = ? AND room = ?", (player, room))
+        player_row = cursor.fetchone()
+        if player_row:
+            player_board = json.loads(player_row[0])
+        else:
+            player_board = all_options
+        
         cursor.execute("SELECT option FROM ticked_options WHERE room = ?", (room,))
         ticked = [r[0] for r in cursor.fetchall()]
-    return jsonify({"options": all_options, "ticked": ticked})
+    return jsonify({"options": player_board, "ticked": ticked})
 
 @socketio.on("join")
 def handle_join(data):

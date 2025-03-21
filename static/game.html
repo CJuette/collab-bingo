@@ -58,19 +58,31 @@
                 if (ticked.includes(option) || option === "FREE SPACE") {
                     cell.classList.add("ticked");
                 }
-                cell.onclick = () => tickOption(option, cell);
+                cell.onclick = () => toggleOption(option, cell);
                 boardElement.appendChild(cell);
             });
         }
 
-        function tickOption(option, cell) {
-            if (cell.classList.contains("ticked")) return;
-            socket.emit("tick_option", { room, option });
+        function toggleOption(option, cell) {
+            if (cell.classList.contains("ticked")) 
+            {
+                socket.emit("untick_option", { room, option })
+            }
+            else
+            {
+                socket.emit("tick_option", { room, option });
+            }
         }
 
         socket.on("option_ticked", data => {
             document.querySelectorAll(".cell").forEach(cell => {
                 if (cell.innerText === data.option) cell.classList.add("ticked");
+            });
+        });
+
+        socket.on("option_unticked", data => {
+            document.querySelectorAll(".cell").forEach(cell => {
+                if (cell.innerText === data.option) cell.classList.remove("ticked");
             });
         });
 

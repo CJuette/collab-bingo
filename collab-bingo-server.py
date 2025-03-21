@@ -113,6 +113,16 @@ def handle_tick(data):
         conn.commit()
     emit("option_ticked", {"option": option}, room=room)
 
+@socketio.on("untick_option")
+def handle_tick(data):
+    room = data.get("room")
+    option = data.get("option")
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM ticked_options WHERE room = ? AND option = ?", (room, option))
+        conn.commit()
+    emit("option_unticked", {"option": option}, room=room)
+
 @socketio.on("join")
 def handle_join(data):
     room = data["room"]

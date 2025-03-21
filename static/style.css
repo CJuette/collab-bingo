@@ -18,15 +18,15 @@ body {
     justify-content: center;
 }
 .cell {
-    padding: 20px;
+    padding: 10px;
     border: 1px solid #000;
     cursor: pointer;
     border-radius: 5px;
-    transition: background-color 0.3s;
+    /* transition: background-color 0.3s; */
 }
-.cell:hover {
+/* .cell:hover {
     background-color: #e0e0e0;
-}
+} */
 .ticked {
     background-color: lightgray;
 }

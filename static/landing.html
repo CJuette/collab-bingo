@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Game</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 20px; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
     <div class="container">
@@ -19,7 +14,7 @@
         <h2>Create a New Room</h2>
         <form id="createRoomForm">
             <input type="text" id="roomName" placeholder="Room Name" required>
-            <textarea id="options" placeholder="Enter options, one per line" required></textarea>
+            <textarea id="options" placeholder="Enter options, one per line" required style="width: 100%; min-height: 100px"></textarea>
             <button type="submit">Create Room</button>
         </form>
         

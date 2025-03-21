@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Multiplayer Bingo!</h1>
+        <p>Play bingo with your friends in real-time. Create a game room or join an existing one.</p>
+        
+        <h2>Create a New Room</h2>
+        <form id="createRoomForm">
+            <input type="text" id="roomName" placeholder="Room Name" required>
+            <textarea id="options" placeholder="Enter options, one per line" required></textarea>
+            <button type="submit">Create Room</button>
+        </form>
+        
+        <button onclick="window.location.href='game'">Join Existing Game</button>
+    </div>
+
+    <script>
+        document.getElementById("createRoomForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const roomName = document.getElementById("roomName").value;
+            const options = document.getElementById("options").value.split("\n").map(opt => opt.trim()).filter(opt => opt);
+            
+            fetch("/create_room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ room_name: roomName, options: options })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert("Room created! Share the name with your friends.");
+                  } else {
+                      alert("Error: " + data.error);
+                  }
+              });
+        });
+    </script>
+</body>
+</html>

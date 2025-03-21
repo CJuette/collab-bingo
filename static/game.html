@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Bingo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .grid { display: grid; gap: 10px; justify-content: center; }
+        .cell { padding: 20px; border: 1px solid #000; cursor: pointer; }
+        .ticked { background-color: lightgray; }
+    </style>
+</head>
+<body>
+    <h2>Multiplayer Bingo</h2>
+    <input type="text" id="room" placeholder="Room Name">
+    <input type="text" id="player" placeholder="Player Name">
+    <button onclick="joinGame()">Join Game</button>
+    <div id="board" class="grid"></div>
+
+    <script>
+        // const socket = io("http://localhost:5000");
+        const socket = io();
+
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+
+        let room = "";
+        let player = "";
+
+        function joinGame() {
+            room = document.getElementById("room").value;
+            player = document.getElementById("player").value;
+            if (!room || !player) return alert("Enter room and player name");
+            
+            fetch(`/game_state/${room}?player=${player}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+                    renderBoard(data.options, data.ticked);
+                    socket.emit("join", { room, player });
+                });
+        }
+
+        function renderBoard(options, ticked) {
+            const boardElement = document.getElementById("board");
+            boardElement.innerHTML = "";
+
+            let size = Math.ceil(Math.sqrt(options.length));
+            boardElement.style.gridTemplateColumns = `repeat(${size}, 100px)`;
+            
+            options.forEach(option => {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.innerText = option;
+                if (ticked.includes(option) || option === "FREE SPACE") {
+                    cell.classList.add("ticked");
+                }
+                cell.onclick = () => tickOption(option, cell);
+                boardElement.appendChild(cell);
+            });
+        }
+
+        function tickOption(option, cell) {
+            if (cell.classList.contains("ticked")) return;
+            socket.emit("tick_option", { room, option });
+        }
+
+        socket.on("option_ticked", data => {
+            document.querySelectorAll(".cell").forEach(cell => {
+                if (cell.innerText === data.option) cell.classList.add("ticked");
+            });
+        });
+
+        // Sync game state when a new player joins
+        socket.on("sync_game", data => {
+            if (data.room === room) {
+                renderBoard(data.board, data.ticked);
+            }
+        });
+    </script>
+</body>
+</html>

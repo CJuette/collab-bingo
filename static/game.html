@@ -7,23 +7,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
     <link rel="stylesheet" href="static/style.css">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .grid { display: grid; gap: 10px; justify-content: center; }
-        .cell { padding: 20px; border: 1px solid #000; cursor: pointer; }
-        .ticked { background-color: lightgray; }
-        .celebration { margin-top: 20px; font-size: 24px; color: green; }
-        .meme { margin-top: 20px; }
+
     </style>
 </head>
 <body>
-    <h2>Multiplayer Bingo</h2>
-    <input type="text" id="room" placeholder="Room Name">
-    <input type="text" id="player" placeholder="Player Name">
-    <button onclick="joinGame()">Join Game</button>
-    <div id="board" class="grid"></div>
-    <div id="celebration" class="celebration" style="display: none;">
-        🎉 Bingo! 🎉
-        <img id="meme" class="meme" src="" alt="Celebration Meme" style="display: none;">
+    <div class="container">
+        <h2>Multiplayer Bingo</h2>
+        <div class="login_form">
+            <input type="text" id="room" placeholder="Room Name">
+            <input type="text" id="player" placeholder="Player Name">
+            <button onclick="joinGame()">Join Game</button>
+        </div>
+        <div id="board" class="grid"></div>
+        <div id="celebration" class="celebration" style="display: none;">
+            🎉 Bingo! 🎉
+            <img id="meme" class="meme" src="" alt="Celebration Meme" style="display: none;">
+        </div>
     </div>
 
     <script>
@@ -42,6 +41,8 @@
             player = document.getElementById("player").value;
             if (!room || !player) return alert("Enter room and player name");
             socket.emit("join", { room, player });
+
+            document.querySelector(".login_form").style.display = "none";
 
             updateGame();
         }
@@ -64,7 +65,7 @@
             boardElement.innerHTML = "";
 
             let size = Math.ceil(Math.sqrt(options.length));
-            boardElement.style.gridTemplateColumns = `repeat(${size}, 100px)`;
+            boardElement.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             
             options.forEach(option => {
                 const cell = document.createElement("div");

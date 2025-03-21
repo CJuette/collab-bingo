@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; text-align: center; }
+.grid { display: grid; gap: 10px; justify-content: center; }
+.cell { padding: 20px; border: 1px solid #000; cursor: pointer; }
+.ticked { background-color: lightgray; }
+.celebration { margin-top: 20px; font-size: 24px; color: green; }
+.meme { margin-top: 20px; }

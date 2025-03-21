@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, join_room, emit
 import sqlite3
 import json
 import random
+import os
 
 app = Flask(__name__, static_folder="static")
 # app.config['SECRET_KEY'] = 'secret!'
@@ -21,6 +22,16 @@ def serve_game():
 @app.route("/")
 def serve_landing_page():
     return send_from_directory("static", "landing.html")
+
+@app.route("/random_meme")
+def random_meme():
+    memes_folder = os.path.join(app.static_folder, "memes")
+    memes = os.listdir(memes_folder)
+    if not memes:
+        return jsonify({"error": "No memes found"}), 404
+    meme = random.choice(memes)
+
+    return jsonify({"filename": meme})
 
 def init_db():
     with sqlite3.connect(db_file) as conn:

@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multiplayer Bingo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <link rel="stylesheet" href="static/style.css">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         .grid { display: grid; gap: 10px; justify-content: center; }
         .cell { padding: 20px; border: 1px solid #000; cursor: pointer; }
         .ticked { background-color: lightgray; }
+        .celebration { margin-top: 20px; font-size: 24px; color: green; }
+        .meme { margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -18,6 +21,10 @@
     <input type="text" id="player" placeholder="Player Name">
     <button onclick="joinGame()">Join Game</button>
     <div id="board" class="grid"></div>
+    <div id="celebration" class="celebration" style="display: none;">
+        🎉 Bingo! 🎉
+        <img id="meme" class="meme" src="" alt="Celebration Meme" style="display: none;">
+    </div>
 
     <script>
         // const socket = io("http://localhost:5000");
@@ -34,13 +41,21 @@
             room = document.getElementById("room").value;
             player = document.getElementById("player").value;
             if (!room || !player) return alert("Enter room and player name");
-            
+            socket.emit("join", { room, player });
+
+            updateGame();
+        }
+
+        function updateGame() {
             fetch(`/game_state/${room}?player=${player}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
                     renderBoard(data.options, data.ticked);
-                    socket.emit("join", { room, player });
+
+                    let size = Math.ceil(Math.sqrt(data.options.length));
+
+                    checkBingoCompletion(size, data.ticked)
                 });
         }
 
@@ -78,20 +93,62 @@
             document.querySelectorAll(".cell").forEach(cell => {
                 if (cell.innerText === data.option) cell.classList.add("ticked");
             });
+            updateGame();
         });
 
         socket.on("option_unticked", data => {
             document.querySelectorAll(".cell").forEach(cell => {
                 if (cell.innerText === data.option) cell.classList.remove("ticked");
             });
+            updateGame();
         });
 
         // Sync game state when a new player joins
         socket.on("sync_game", data => {
             if (data.room === room) {
-                renderBoard(data.board, data.ticked);
+                updateGame();
             }
         });
+
+        function checkBingoCompletion(size, ticked) {
+            const boardElement = document.getElementById("board");
+            const cells = boardElement.querySelectorAll(".cell");
+            const celebrationElement = document.getElementById("celebration");
+            const memeElement = document.getElementById("meme");
+
+            let rows = Array(size).fill(0);
+            let cols = Array(size).fill(0);
+            let diag1 = 0;
+            let diag2 = 0;
+
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / size);
+                const col = index % size;
+                if (cell.classList.contains("ticked")) {
+                    rows[row]++;
+                    cols[col]++;
+                    if (row === col) diag1++;
+                    if (row + col === size - 1) diag2++;
+                }
+            });
+
+            if (rows.includes(size) || cols.includes(size) || diag1 === size || diag2 === size) {
+                celebrationElement.style.display = "block";
+                fetch("/random_meme")
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            memeElement.style.display = "none";
+                        } else {
+                            memeElement.src = `static/memes/${data.filename}`;
+                            memeElement.style.display = "block";
+                        }
+                    });
+            } else {
+                celebrationElement.style.display = "none";
+                memeElement.style.display = "none";
+            }
+        }
     </script>
 </body>
 </html>
